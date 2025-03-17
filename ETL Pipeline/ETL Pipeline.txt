@@ -1,0 +1,104 @@
+ETL Pipelines:
+
+Goal
+
+	The goal of the ETL pipeline is to dynamically extract, transform, and load New York Taxi Trip Record data from a website (API) into a structured format using 	Azure Data Factory and Databricks. The pipeline is designed to handle incremental loading using parameterized datasets and pipelines to load data month-by-	month for the entire year of 2023.
+
+High-Level ETL Process
+The ETL pipeline follows these key stages:
+
+	Extract – Load data from the API using Azure Data Factory.
+	Transform – Clean, normalize, and apply business rules using Databricks (PySpark).
+	Load – Write data into the Bronze, Silver, and Gold layers in ADLS Gen2.
+
+1. Extraction – Bronze Layer
+	Data Source:
+	Source: Website (API)
+	Data Type: Parquet format
+
+	DF Pipeline Components:
+	Copy Activity – Extracts data from the API into the Bronze Layer
+	ForEach Activity – Loops over all 12 months of data dynamically
+	If Condition – Checks for the presence of data and validates the data
+
+	Parameterized Pipeline Design
+	Created a dynamic pipeline using parameters to make the pipeline reusable and scalable:
+
+Pipeline Parameters:
+
+Parameter			Type					Description
+year				String					Year to be ingested
+month				String					Month to be ingested
+source_url			String					API endpoint for data extraction
+destination_path		String					Location to store raw data
+
+	ADF Pipeline Flow:
+	Lookup Activity – Fetches list of available data months
+	Set Variable Activity – Stores the current month and year
+	ForEach Activity – Iterates over each available month
+	If Condition – Validates the data file availability
+	Copy Activity – Copies the data from API to the Bronze Layer in ADLS Gen2
+
+
+2. Transformation – Silver Layer
+
+	Transformation Process:
+	Data from the Bronze Layer is read into Databricks using PySpark for transformation.
+
+Transformations include:
+	Renaming column names for consistency
+	Splitting one column into two using a delimiter /
+	Creating new columns:
+
+Extracting date, month, and year from a timestamp column
+	Removing null and invalid values
+	Type conversion for consistent schema
+
+# Write to Silver Layer
+
+3. Loading – Gold Layer
+
+Load Process:
+	Transformed data from the Silver Layer is stored in the Gold Layer as Delta Tables.
+	Created External Tables and Databases in Databricks using Unity Catalog.
+
+
+# Read data from Silver Layer
+
+# Write data to Delta Table in Gold Layer
+
+# Create External Table
+
+4. Dynamic Pipeline Design
+
+	The pipeline is fully parameterized and reusable:
+	Data Source: Dynamic API endpoint
+	Date Handling: Loads data for any given year and month
+	Scalability: Handles large data volumes using distributed processing in Databricks
+	Incremental Loading: Based on partitioning and file creation
+
+5. Monitoring and Logging
+
+	Configured pipeline logging using Azure Monitor
+	Set up alerts for pipeline failures
+	Logged pipeline execution status and duration
+
+6. Error Handling
+
+	Used If Condition activity in ADF to handle missing data
+	Configured Try-Catch block in Databricks for PySpark errors
+	Enabled checkpointing to avoid data duplication
+
+7. Business Value
+
+	Fully automated and dynamic pipeline – no manual intervention required
+	Fast data processing with distributed Databricks clusters
+	Clean and well-organized data for reporting and analysis
+	Scalable and reusable for future data loads
+
+Summary
+Stage						Tool/Service					Purpose
+Extract						Azure Data Factory				Dynamic data extraction using API
+Transform					Databricks (PySpark)				Data cleaning and transformation
+Load						Azure Data Lake 				Storage	Storing data in Delta Tables
+Metadata					Unity Catalog					Data cataloging and governance
