@@ -1,0 +1,118 @@
+Final Project Output:
+
+Goal
+
+The goal of this project was to build a fully automated, dynamic data engineering pipeline to process New York Taxi Trip Record Data using the Medallion Architecture. The pipeline was designed to handle incremental data ingestion, transformation, and loading using Azure Data Factory and Databricks. The final output provides a well-organized, structured dataset ready for business analysis and reporting.
+
+1. Project Summary
+	Project Type: End-to-End Data Engineering Pipeline
+	Source: Website (API)
+	Ingestion: Azure Data Factory (dynamic and parameterized)
+	Storage: Azure Data Lake Storage Gen2 (Bronze, Silver, Gold)
+	Transformation: Databricks (PySpark)
+	Incremental Load: Handled using dynamic pipelines and partitioning
+	Cataloging: Unity Catalog for governance and security
+	Optimization: Partitioning and Z-Ordering for query performance
+	Reporting: Power BI
+
+2. End-to-End Pipeline Overview
+
+	PHASE 1 – Data Ingestion (Bronze Layer)
+	Data extracted from the website (API) using Azure Data Factory
+	ADF pipeline configured to handle dynamic data loads based on parameters
+	Data stored in Parquet format in the Bronze Layer
+Key Components:
+	Copy Activity
+	ForEach Activity
+	If Condition
+	Parameterized Pipeline
+
+	PHASE 2 – Data Transformation (Silver Layer)
+
+	Data processed using Databricks (PySpark)
+	Cleaned and enhanced data using:
+	Renaming columns
+	Splitting columns
+	Extracting date, month, and year
+	Handling null values
+	Creating calculated fields
+	Transformed data written to the Silver Layer in Parquet format
+Key PySpark Transformations:
+	Null Handling
+	Type Conversion
+	Column Splitting
+	Conditional Column Creation
+	Aggregation
+
+	PHASE 3 – Data Warehousing (Gold Layer)
+	Transformed data written to the Gold Layer in Delta Lake format
+	Created Delta Tables and External Tables using Unity Catalog
+
+
+	PHASE 4 – Reporting and Insights
+	Data loaded into Azure Synapse Analytics
+	Connected to Power BI for visualization and reporting
+	Created dynamic dashboards with key business metrics
+
+3. Final Architecture Diagram:
+
+The following architecture shows the full pipeline from ingestion to reporting:
+
+→ API → ADF (Bronze) → Databricks (Silver) → Delta Tables (Gold) → Power BI
+
+4. Key Metrics
+
+Metric						Value
+Total Data Processed				~12 months of New York Taxi Trip data (2023)
+Incremental Load Frequency			Monthly
+Average Pipeline Execution Time			~8 minutes
+Total Records Processed				~100 million records
+Fact Table Size					~1.2 GB
+Query Performance (after Z-Ordering)		5x improvement in response time
+
+
+5. Performance Enhancements
+
+	Partitioning: Partitioned tables by year and month
+	Z-Ordering: Optimized queries using Z-Order indexing
+	Incremental Loading: Reduced processing time using dynamic pipelines
+
+7. Challenges and Solutions
+
+Challenge				Solution
+Data Duplication			Implemented checkpointing and incremental loading
+Performance Issues			Partitioned and optimized using Z-Ordering
+Schema Inconsistencies			Standardized schema using PySpark transformations
+Data Availability			Configured If Condition in ADF to handle missing files
+
+
+8. Business Value
+	Scalable Solution – Pipeline can handle growing data volumes
+	Reusable Design – Parameterized and dynamic pipeline design
+	Fast Query Performance – Z-Ordering and partitioning for faster queries
+	Clean and Accurate Data – Enhanced data quality through transformations
+
+9. Tools and Technologies Used
+
+Tool/Service					Purpose
+Azure Data Factory				Data ingestion
+Databricks					Data transformation
+Azure Data Lake Gen2				Data storage
+Unity Catalog					Data cataloging
+Delta Lake					Data warehousing
+Azure Synapse Analytics				Data warehouse and reporting
+Power BI					Data visualization
+
+10. Results and Outcome
+	Fully automated dynamic pipeline
+	Incremental loading reduces processing time
+	Clean and structured data for reporting
+	Fast query response time using Delta Tables
+
+Summary
+
+Stage			Tool/Service					Purpose
+Extract			Azure Data Factory				Dynamic data extraction using API
+Transform		Databricks (PySpark)				Data cleaning and transformation
+Load			Delta Lake					Storing data in Delta format
+Report			Power BI					Business insights and trends
