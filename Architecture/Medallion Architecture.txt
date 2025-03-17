@@ -1,0 +1,84 @@
+Data Architecture (Medallion Architecture):
+
+Goal
+
+The goal of the data architecture is to create a scalable and organized data processing pipeline using the Medallion Architecture pattern. This approach helps to efficiently process, clean, and store large volumes of semi-structured data from the New York Taxi Trip Record dataset.
+
+
+The architecture follows the Medallion Architecture consisting of three layers:
+
+	Bronze Layer – Raw Data Layer
+	Silver Layer – Cleaned and Transformed Data Layer
+	Gold Layer – Aggregated and Modeled Data Layer
+	This multi-layered approach ensures better data quality, scalability, and query performance.
+
+Data Flow Overview:
+
+	1- Data is ingested from a Website (API) into the Bronze Layer using Azure Data Factory.
+	2- Data is processed and cleaned in Databricks and written to the Silver Layer.
+	3- Final data is aggregated and modeled into a star schema in the Gold Layer using Delta Tables for efficient reporting and analysis.
+
+1. Bronze Layer – Raw Data Layer
+
+	Purpose:
+	Store raw data in its original format
+	Preserve the integrity of source data for auditing and recovery
+
+	Location:
+	Stored in Azure Data Lake Storage Gen2
+	Format: Parquet
+
+	How Data is Loaded:
+	Ingested using Azure Data Factory
+	Data Factory dynamically loads 12 months of 2023 data using:
+	Parameterized Datasets
+	ForEach Activity
+	If Condition
+	
+2. Silver Layer – Cleaned and Transformed Data Layer
+
+	Purpose:
+	Clean, transform, and standardize data
+	Remove nulls, rename columns, and apply business logic
+
+	Location:
+	Stored in Azure Data Lake Storage Gen2
+	Format: Parquet
+
+	How Data is Processed:
+	Used Databricks with PySpark for transformations:
+	Renamed columns
+	Split columns using a delimiter /
+	Converted timestamp column to date, month, and year
+	Stored as partitioned Parquet files in a structured format
+
+3. Gold Layer – Aggregated and Modeled Data Layer
+
+	Purpose:
+	Store aggregated data for fast analytical queries
+	Create a structured star schema for business reporting
+
+	Location:
+	Stored in Azure Data Lake Storage Gen2
+	Format: Delta Tables
+
+	How Data is Processed:
+	Transformed Silver Layer data is loaded into Gold Layer using PySpark
+	Created Delta Tables and External Tables in Databricks using Unity Catalog
+
+	Star schema includes:
+	Fact Table – Transactional data (e.g., Trip Records)
+	Dimension Tables – Lookup data (e.g., Dates, Location, Vehicle Type)
+	Partitioned based on date and location for fast query performance
+
+4. Tools and Technologies Used
+
+Tool/Service						Purpose
+					
+Azure Data Factory					Data ingestion and orchestration
+Azure Data Lake Gen2					Data storage (Bronze, Silver, Gold)
+Azure Databricks					Data processing and transformation
+Unity Catalog						Data cataloging and governance
+PySpark							Data transformation and processing
+Delta Tables						Fast, scalable data storage for analytics
+Service Principal					Secure access to storage
