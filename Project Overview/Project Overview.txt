@@ -1,0 +1,48 @@
+Project Overview
+
+Goal:
+
+	The goal of this project is to build a scalable and dynamic data pipeline to process New York Taxi Trip Record Data using Azure and Databricks. The project 	aims to address the challenges of handling large volumes of data from a website (API) by automating the data ingestion, transformation, and storage processes 	using a Medallion Architecture (Bronze, Silver, Gold layers).
+
+Business Problem:
+
+Analyzing New York Taxi Trip Record data involves handling large volumes of semi-structured data. The challenges include:
+
+	1- High volume of data with incremental growth
+	2- Need for dynamic and parameterized ingestion
+	3 Efficient data transformation and aggregation
+	4 Fast and scalable reporting for analytical insights
+
+Solution:
+
+The solution was implemented using an end-to-end Medallion Architecture with the following phases:
+
+PHASE 1: Data Ingestion
+
+	Source: New York Taxi Trip Record Data from a Website (API)
+	Used Azure Data Factory to dynamically ingest 12 months of data from 2023
+	Configured parameterized pipelines, datasets, and activities (ForEach, If Condition)
+	Stored data in Bronze Layer in Parquet format in ADLS Gen2
+
+PHASE 2: Data Transformation
+
+	Used Azure Databricks and PySpark to clean and transform data
+	Transformations included:
+	1- Renaming columns
+	2- Splitting columns using a delimiter /
+	3 Creating new columns (date, month, year) from a timestamp column
+	Stored transformed data in Silver Layer in Parquet format
+
+PHASE 3: Data Warehousing and Modeling
+
+	Loaded transformed data into the Gold Layer in Delta format
+	Created Delta Tables and External Tables using Unity Catalog
+	Used Unity Catalog to manage metadata and data governance
+	Created structured Star Schema for efficient querying and reporting
+	
+	Business Value
+	1- Faster query performance using Delta Tables
+	2- Scalable and dynamic pipeline to handle growing data
+	3- Clean and structured data for improved analysis
+	4- Enhanced reporting and insights for business decision-making
+
