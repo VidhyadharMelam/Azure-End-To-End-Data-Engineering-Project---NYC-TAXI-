@@ -1,0 +1,130 @@
+Data Transformation:
+
+Goal
+
+	The goal of the data transformation stage is to clean, standardize, and enhance the raw New York Taxi Trip Record data using PySpark in Databricks. The 	transformations aim to improve data quality, ensure consistency, and prepare the data for analytical processing in the Gold Layer.
+
+High-Level Transformation Flow:
+
+	Read – Load data from the Bronze Layer into Databricks
+	Transform – Clean and standardize the data using PySpark
+	Enhance – Add business logic and calculated fields
+	Write – Store the transformed data in the Silver Layer and Gold Layer
+
+1. Reading Data from Bronze Layer
+
+	Data from the Bronze Layer is stored in Parquet format in ADLS Gen2.
+	Data is read into Databricks using PySpark:
+
+df = spark.read.parquet("abfss://bronze@storageaccount.dfs.core.windows.net/taxi_data/year=2023")
+
+2. Cleaning and Standardizing Data
+	Rename Columns
+	Renamed columns to follow consistent naming conventions:
+
+
+df = df.withColumnRenamed("pickup_datetime", "trip_start_time") \
+       .withColumnRenamed("dropoff_datetime", "trip_end_time") \
+       .withColumnRenamed("passenger_count", "num_passengers")
+
+	Handle Null Values
+	Removed rows with null or invalid data:
+
+
+df = df.na.drop(subset=["trip_start_time", "trip_end_time", "num_passengers"])
+
+	Type Conversion
+	Converted data types to match the schema requirements:
+
+
+from pyspark.sql.types import IntegerType, DoubleType
+
+df = df.withColumn("num_passengers", df["num_passengers"].cast(IntegerType())) \
+       .withColumn("trip_distance", df["trip_distance"].cast(DoubleType()))
+
+
+3. Enhancing Data
+	Splitting Columns
+	Split location data into two separate columns using a delimiter /:
+
+
+from pyspark.sql.functions import split, col
+
+split_col = split(col("location"), "/")
+df = df.withColumn("pickup_location", split_col.getItem(0))
+df = df.withColumn("dropoff_location", split_col.getItem(1))
+
+	Create Date, Month, and Year Columns
+	Extract date, month, and year from the timestamp column:
+
+
+from pyspark.sql.functions import year, month, dayofmonth
+
+df = df.withColumn("trip_year", year(col("trip_start_time"))) \
+       .withColumn("trip_month", month(col("trip_start_time"))) \
+       .withColumn("trip_day", dayofmonth(col("trip_start_time")))
+
+	Conditional Column Creation
+	Add a calculated column based on trip distance:
+
+	If trip distance is greater than 5 miles → "Long Trip"
+	If trip distance is less than or equal to 5 miles → "Short Trip"
+
+from pyspark.sql.functions import when
+
+df = df.withColumn("trip_category", when(col("trip_distance") > 5, "Long Trip").otherwise("Short Trip"))
+
+	Aggregation
+	Calculate the total revenue per day:
+
+
+from pyspark.sql.functions import sum
+
+daily_revenue = df.groupBy("trip_year", "trip_month", "trip_day").agg(
+    sum("total_amount").alias("total_revenue")
+)
+
+4. Writing Data to Silver Layer
+	Transformed data is written to the Silver Layer in Parquet format:
+
+
+df.write.mode("overwrite").parquet("abfss://silver@storageaccount.dfs.core.windows.net/taxi_data/year=2023")
+
+5. Writing Data to Gold Layer (Delta Format)
+	Transformed Silver Layer data is loaded into the Gold Layer using Delta Tables:
+
+
+df.write.format("delta").mode("overwrite").save("abfss://gold@storageaccount.dfs.core.windows.net/taxi_data")
+
+# Create External Table
+spark.sql("""
+    CREATE TABLE IF NOT EXISTS gold_taxi_trip_data
+    USING DELTA
+    LOCATION 'abfss://gold@storageaccount.dfs.core.windows.net/taxi_data'
+""")
+
+
+
+6. Performance Optimization
+	Partitioning: Partitioned the Delta Table by trip_year and trip_month for faster query performance.
+	Z-Ordering: Applied Z-Ordering to optimize column-based filtering:
+
+spark.sql("""
+OPTIMIZE gold_taxi_trip_data
+ZORDER BY (trip_start_time)
+""")
+
+8. Business Value
+	
+	Clean, standardized data for better reporting and analysis
+	Faster query performance using Delta Tables
+	Well-structured star schema for business intelligence
+	Dynamic pipeline for future scalability
+
+Summary
+
+Stage		Transformation						Purpose
+Cleaning	Renaming, null handling, type conversion		Ensure consistent data structure
+Enhancement	Column splitting, date extraction, category creation	Improve data for analysis
+Aggregation	Sum and grouping					Generate business insights
+Optimization	Partitioning, Z-Ordering				Improve query performance
